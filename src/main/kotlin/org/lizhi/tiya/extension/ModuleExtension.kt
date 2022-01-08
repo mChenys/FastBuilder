@@ -19,7 +19,7 @@ import org.lizhi.tiya.project.ModuleProject
 /**
  * 模块工程配置项,注意name必须是:开头
  */
-class ModuleExtension(val name: String) {
+open class ModuleExtension(val name: String) {
     /**
      * 使用debug包
      */

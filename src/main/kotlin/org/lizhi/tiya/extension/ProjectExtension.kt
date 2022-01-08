@@ -21,7 +21,7 @@ import java.io.File
 /**
  * 插件配置项
  */
-class ProjectExtension(private val project: Project) {
+open class ProjectExtension(private val project: Project) {
 
     /**
      * 是否启用插件
@@ -42,7 +42,7 @@ class ProjectExtension(private val project: Project) {
     /**
      * 得到存储lib的目录
      */
-    var storeLibsDir: File = File(project.buildDir, "fast_builder")
+    var storeLibsDir: File = File(project.buildDir, ".fast_builder")
 
 
     /**
