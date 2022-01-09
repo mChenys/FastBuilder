@@ -7,6 +7,10 @@ App--》user--》common--》base
 依赖回传的过程是：
 base--》common--》user--》App
 
+# 插件类图
+![image](https://user-images.githubusercontent.com/19259572/148691544-4d28db73-cefb-4cd8-abd5-ddf0c21a718f.png)
+
+
 # 使用指南
 在您的app的build.gradle添加如下配置
 ```groovy
