@@ -8,7 +8,7 @@ plugins {
 
 val artifactId="FastBuilder"
 val groupName = "io.github.tiyateam.fastbuilder"
-val artifactVersion = "1.0.2"
+val artifactVersion = "1.0.48"
 group = groupName
 version = artifactVersion
 
@@ -41,6 +41,7 @@ dependencies {
 //    testRuntimeOnly("org.junit.jupiter:junit-jupiter-engine")
 
     implementation("com.android.tools.build:gradle:3.6.0")
+    implementation("org.jooq:joor-java-8:0.9.13")
 }
 
 tasks.getByName<Test>("test") {

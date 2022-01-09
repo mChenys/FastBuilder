@@ -42,7 +42,12 @@ open class ProjectExtension(private val project: Project) {
     /**
      * 得到存储lib的目录
      */
-    var storeLibsDir: File = File(project.buildDir, ".fast_builder")
+    var storeLibsDir: File = File(project.rootProject.buildDir, ".fast_builder_aar")
+
+    /**
+     * 用于存储files('./src/zhiya/jniLibs/smantifraud.aar') 移动后的文件
+     */
+    var storeSelfLibsDir: File = File(project.rootProject.buildDir, ".fast_builder_flatDir")
 
 
     /**

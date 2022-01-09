@@ -86,6 +86,7 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
             for (childProject in project.rootProject.childProjects) {
                 childProject.value.repositories.flatDir { flatDirectoryArtifactRepository ->
                     flatDirectoryArtifactRepository.dir(projectExtension.storeLibsDir)
+                    flatDirectoryArtifactRepository.dir(projectExtension.storeSelfLibsDir)
                 }
             }
             // 获取有效的启动任务,若没有配置,则采主工程命名的task
