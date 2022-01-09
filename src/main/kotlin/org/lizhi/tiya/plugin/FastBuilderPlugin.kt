@@ -83,6 +83,7 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
             FastBuilderLogger.enableLogging = projectExtension.logEnable
 
             // 设置module工程的flat仓库,为后续添加aar做准备
+            // https://issuetracker.google.com/issues/165821826
             for (childProject in project.rootProject.childProjects) {
                 childProject.value.repositories.flatDir { flatDirectoryArtifactRepository ->
                     flatDirectoryArtifactRepository.dir(projectExtension.storeLibsDir)

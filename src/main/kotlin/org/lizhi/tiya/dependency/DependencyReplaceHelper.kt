@@ -200,11 +200,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             if (dependencyModuleProject.cacheValid) {
                 // 缓存命中
                 FastBuilderLogger.logLifecycle("${currentProject.name} 依赖 ${dependencyModuleProject.obtainName()} 缓存命中 ${configuration.state}")
-                // 添加依赖路径 todo FastBuilderPlugin已经设置过,这里可不设置?
-                /*currentProject.repositories.flatDir { flatDirectoryArtifactRepository ->
-                    flatDirectoryArtifactRepository.dir(projectExtension.storeLibsDir)
-                }*/
-                //https://issuetracker.google.com/issues/165821826
+
                 dependencyUtils.suppressionDeChange(configuration)
                 // 移除原始的project依赖
                 configuration.dependencies.remove(dependency)
