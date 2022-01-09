@@ -28,7 +28,7 @@ import java.io.File
  */
 class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
-    private val dependencyUtils = DependencyUtils()
+    private val configList = mutableSetOf<String>("api", "runtimeOnly", "implementation")
 
     /**
      * 从根工程开始向下替换依赖
@@ -93,11 +93,11 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                                     copySpec.into(pluginContext.getProjectExtension().storeSelfLibsDir)
                                 }
                             }
-                            dependencyUtils.suppressionDeChange(configuration)
+                            DependencyUtils.suppressionDeChange(configuration)
 
                             configuration.dependencies.remove(dependency)
                             configuration.dependencies.add(
-                                dependencyUtils.obtainDependency(
+                                DependencyUtils.obtainDependency(
                                     pluginContext,
                                     singleFile.name.removeSuffix(".aar"),
                                     "aar"
@@ -118,8 +118,6 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
     }
 
-    private val configList = mutableSetOf<String>("api", "runtimeOnly", "implementation")
-    private val apiConfigList = mutableSetOf<String>("api", "runtimeOnly", "implementation")
 
     /**
      * 递归替换依赖
@@ -144,18 +142,18 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
         // 把下层的依赖投递到上层, 由于下层的module变成aar后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
         if (parent != null && moduleProject != null && moduleProject.cacheValid) {
             // 原始类型
-            copyDependencyWithPrefix(currentProject, parent, "")
+            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
             // Debug 前缀类型
-            copyDependencyWithPrefix(currentProject, parent, "debug")
+            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "debug")
             // release前缀类型
-            copyDependencyWithPrefix(currentProject, parent, "release")
+            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "release")
             // 变体前缀
             val flavorName = moduleProject.moduleExtension.flavorName
             if (flavorName.isNotBlank()) {
                 //api debugApi tiyaDebugApi
-                copyDependencyWithPrefix(currentProject, parent, flavorName)
-                copyDependencyWithPrefix(currentProject, parent, flavorName + "Debug")
-                copyDependencyWithPrefix(currentProject, parent, flavorName + "Release")
+                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName)
+                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Debug")
+                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Release")
             }
         }
     }
@@ -200,8 +198,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             if (dependencyModuleProject.cacheValid) {
                 // 缓存命中
                 FastBuilderLogger.logLifecycle("${currentProject.name} 依赖 ${dependencyModuleProject.obtainName()} 缓存命中 ${configuration.state}")
-
-                dependencyUtils.suppressionDeChange(configuration)
+                DependencyUtils.suppressionDeChange(configuration)
                 // 移除原始的project依赖
                 configuration.dependencies.remove(dependency)
                 // 添加aar依赖
@@ -223,83 +220,5 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
         // 处理完当前Project的依赖后,还需要继续处理它依赖的Project的 project依赖, 这是一个递归操作, 由父向子层层递归处理
         replaceDependency(dependencyProject, currentProject)
-    }
-
-    /**
-     * 将currentProject的依赖copy到parentProject
-     */
-    private fun copyDependencyWithPrefix(
-        currentProject: Project,
-        parentProject: Project,
-        prefix: String,
-        list: Set<String> = apiConfigList
-    ) {
-        for (configName in list) {
-            val newConfigName = if (prefix.isBlank()) {
-                configName
-            } else {
-                prefix + configName.capitalize()
-            }
-            // ModuleArchiveLogger.logLifecycle("赋值依赖: ${newConfigName}")
-            copyDependency(currentProject, parentProject, newConfigName)
-        }
-    }
-
-
-    private fun copyDependency(currentProject: Project, parentProject: Project, configName: String) {
-        val srcConfig = currentProject.configurations.getByName(configName)
-        val dstConfig = parentProject.configurations.getByName(configName)
-        val parentContains = parentProject.configurations.names.contains(configName)
-        if (parentContains) {
-            // 必须要保证依赖配置的名字在父工程存在,比如子工程用了一个叫xxxApi的configName,父工程也需要存在
-            copyDependency(srcConfig, dstConfig)
-        }
-    }
-
-    private fun copyDependency(src: Configuration, dst: Configuration) {
-        for (dependency in src.dependencies) {
-            if (dependency is ModuleDependency) {
-                val srcExclude = configMatchExclude(src, dependency)
-                val destExclude = configMatchExclude(dst, dependency)
-                // 如果当前依赖存在忽略配置中,那么不需要拷贝
-                if (srcExclude || destExclude) {
-                    continue
-                } else {
-                    /**
-                     * 如果子工程或者父工程配置了依赖忽略配置,那么需要给每一项依赖增加一条依赖忽略关系,例如这种配置:
-                     * configurations {
-                     *  all*.exclude group:'org.jetbrains.kotlin',module:'kotlin-stdlib-jre7'
-                     *  all*.exclude group:'com.yibasan.lizhifm.sdk.network',module:'http'
-                     *  all*.exclude group:'com.lizhi.component.lib',module:'itnet-http-lib'
-                     * }
-                     */
-                    src.excludeRules.forEach {
-                        dependency.exclude(mapOf("group" to it.group, "module" to it.module))
-                    }
-                    dst.excludeRules.forEach {
-                        dependency.exclude(mapOf("group" to it.group, "module" to it.module))
-                    }
-                    // dependency.excludeRules.addAll(src.excludeRules)
-                    // dependency.excludeRules.addAll(dest.excludeRules)
-                }
-            }
-            dependencyUtils.suppressionDeChange(dst)
-            // 将子工程的依赖添加到父工程中
-            dst.dependencies.add(dependency)
-        }
-    }
-
-    /**
-     * 判断当前依赖是否已经加入到忽略规则里面
-     */
-    private fun configMatchExclude(configuration: Configuration, dependency: Dependency): Boolean {
-        for (excludeRule in configuration.excludeRules) {
-            return if (excludeRule.module.isNullOrBlank()) {
-                dependency.group == excludeRule.group
-            } else {
-                dependency.group == excludeRule.group && dependency.name == excludeRule.module
-            }
-        }
-        return false
     }
 }
