@@ -51,16 +51,14 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
      */
     private fun replaceSelfResolvingDependency() {
         for (childProject in pluginContext.getApplyProject().rootProject.childProjects) {
-            var starTime = System.currentTimeMillis()
-
             configFor@ for (configuration in childProject.value.configurations) {
                 /**
                  * 此处是为了跳过不必要的config，只有后缀是api runtimeOnly implementation才处理
                  */
-                var flag=false
+                var flag = false
                 for (hitName in configList) {
-                    if (configuration.name.endsWith(hitName,true)) {
-                        flag=true
+                    if (configuration.name.endsWith(hitName, true)) {
+                        flag = true
                         break
                     }
                 }
@@ -108,9 +106,6 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                 }
 
             }
-            var endTime = System.currentTimeMillis()
-
-            FastBuilderLogger.logLifecycle("${childProject.value.name}    时间${endTime - starTime}")
 
 
         }
@@ -140,7 +135,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             }
         }
         // 把下层的依赖投递到上层, 由于下层的module变成aar后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
-        if (parent != null && moduleProject != null && moduleProject.cacheValid) {
+        if (parent == pluginContext.getApplyProject() ||(parent != null && moduleProject != null && moduleProject.cacheValid) ) {
             // 原始类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
             // Debug 前缀类型
@@ -148,7 +143,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             // release前缀类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "release")
             // 变体前缀
-            val flavorName = moduleProject.moduleExtension.flavorName
+            val flavorName = moduleProject!!.moduleExtension.flavorName
             if (flavorName.isNotBlank()) {
                 //api debugApi tiyaDebugApi
                 DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName)
