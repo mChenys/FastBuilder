@@ -29,7 +29,7 @@ gradlePlugin {
         create(artifactId) {
             id = groupName
             displayName = artifactId
-            description = "Improve the efficiency of compiling Android.Package module as AAR and cache it."
+            description = "Replace Android module dependency with AAR dependency at compile time."
             implementationClass = "org.lizhi.tiya.plugin.FastBuilderPlugin"
         }
     }
