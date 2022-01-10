@@ -24,7 +24,7 @@ moduleArchive {
     logEnable = true
     //可选参数.是否启用插件 默认为false
     pluginEnable = true
-    //必选参数.存储插件临时配置目录
+    //可选参数.存储插件临时配置目录,不设置默认会在根工程的build/.fast_builder_aar下
     storeLibsDir = project.rootProject.file("libs")
     //下面配置哪些模块可以被编译成aar缓存
     subModuleConfig {
