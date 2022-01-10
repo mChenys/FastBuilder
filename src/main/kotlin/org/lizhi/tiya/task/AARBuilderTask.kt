@@ -26,7 +26,7 @@ import java.io.File
 import javax.inject.Inject
 
 /**
- * 模块aar构建和拷贝处理,此task是多个模块工程共用的
+ * 模块aar构建和拷贝处理,此task是多个模块工程共用的  
  */
 abstract class AARBuilderTask @Inject constructor(@Internal val pluginContext: IPluginContext) : DefaultTask() {
 

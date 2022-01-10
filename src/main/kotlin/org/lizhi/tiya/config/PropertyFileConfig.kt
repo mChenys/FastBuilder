@@ -27,6 +27,7 @@ import kotlin.concurrent.thread
  * 配置文件
  */
 class PropertyFileConfig(private val pluginContext: IPluginContext) {
+
     private val props = Properties()
 
     var isInit = false

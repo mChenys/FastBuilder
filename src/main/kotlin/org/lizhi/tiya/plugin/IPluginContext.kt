@@ -56,7 +56,7 @@ interface IPluginContext {
     fun getPropertyConfig(): PropertyFileConfig
 
     /**
-     * 获取
+     * 获取模块的工程集合
      */
     fun getModuleProjectList():List<ModuleProject>
 }
