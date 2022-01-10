@@ -52,6 +52,15 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
     }
 
     /**
+     * 是否存在配置文件
+     */
+    fun existConfigFile(): Boolean {
+        val configFile = File(pluginContext.getProjectExtension().storeLibsDir, fileName)
+        return configFile.exists() && configFile.length() > 0
+    }
+
+
+    /**
      * 缓存是否有效
      */
     fun isCacheValid(project: ModuleProject): Boolean {
