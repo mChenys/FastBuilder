@@ -63,6 +63,8 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
             doLast {
                 propertyFileConfig.saveConfig()
             }
+            // 设置task输出目录
+            aarOutDir(projectExtension.storeLibsDir)
         }
         // 初始化依赖替换帮助类
         this.dependencyReplaceHelper = DependencyReplaceHelper(this)
@@ -74,11 +76,18 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
             }
             val androidExtension = project.extensions.getByName("android") as BaseAppModuleExtension
             androidExtension.applicationVariants.all { variant ->
+                if (!propertyFileConfig.existConfigFile()) {
+                    variant.assembleProvider.get().dependsOn(project.tasks.getByName("clean").apply {
+                        doLast {
+                            FastBuilderLogger.logLifecycle("清理任务执行完毕by:${variant.assembleProvider.get().name}")
+                        }
+                    })
+                }
                 // 在assemble任务之后执行aar的构建任务
                 variant.assembleProvider.get().finalizedBy(this.aarBuilderTask)
             }
 
-            var starTime = System.currentTimeMillis();
+            val starTime = System.currentTimeMillis();
             //赋值日志是否启用
             FastBuilderLogger.enableLogging = projectExtension.logEnable
 
@@ -105,9 +114,6 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
             }
             // 初始化module工程
             moduleProjectList = propertyFileConfig.prepareByConfig()
-
-            // 设置task输出目录
-            aarBuilderTask.aarOutDir(projectExtension.storeLibsDir)
 
             // 开始替换依赖
             dependencyReplaceHelper.replaceDependency()
