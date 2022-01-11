@@ -73,7 +73,7 @@ class ModuleProject(val moduleExtension: ModuleExtension, private val pluginCont
     fun obtainCacheAARFile(): File {
         if (this.aarFile == null) {
             val extension = pluginContext.getProjectExtension()
-            aarFile = File(extension.storeLibsDir, moduleExtension.aarName)
+            aarFile = File(extension.moduleAarsDir, moduleExtension.aarName)
         }
         return aarFile!!
     }
