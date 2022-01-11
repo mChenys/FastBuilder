@@ -36,8 +36,8 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
 
     private fun getPropertyInfo(): Properties {
         if (!isInit) {
-            val storeLibsDir = pluginContext.getProjectExtension().storeLibsDir
-            val configFile = File(storeLibsDir, fileName)
+            val moduleAarsDir = pluginContext.getProjectExtension().moduleAarsDir
+            val configFile = File(moduleAarsDir, fileName)
             if (!configFile.exists()) {
                 configFile.createNewFile()
             } else {
@@ -55,7 +55,7 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
      * 是否存在配置文件
      */
     fun existConfigFile(): Boolean {
-        val configFile = File(pluginContext.getProjectExtension().storeLibsDir, fileName)
+        val configFile = File(pluginContext.getProjectExtension().moduleAarsDir, fileName)
         return configFile.exists() && configFile.length() > 0
     }
 
@@ -94,8 +94,8 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
      */
     fun saveConfig() {
         val propertyInfo = getPropertyInfo()
-        val storeLibsDir = pluginContext.getProjectExtension().storeLibsDir
-        val configFile = File(storeLibsDir, fileName)
+        val moduleAarsDir = pluginContext.getProjectExtension().moduleAarsDir
+        val configFile = File(moduleAarsDir, fileName)
         propertyInfo.store(FileWriter(configFile), "用于存储缓存aar映射关系")
     }
 

@@ -64,7 +64,7 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
                 propertyFileConfig.saveConfig()
             }
             // 设置task输出目录
-            aarOutDir(projectExtension.storeLibsDir)
+            aarOutDir(projectExtension.moduleAarsDir)
         }
         // 初始化依赖替换帮助类
         this.dependencyReplaceHelper = DependencyReplaceHelper(this)
@@ -95,8 +95,8 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
             // https://issuetracker.google.com/issues/165821826
             for (childProject in project.rootProject.childProjects) {
                 childProject.value.repositories.flatDir { flatDirectoryArtifactRepository ->
-                    flatDirectoryArtifactRepository.dir(projectExtension.storeLibsDir)
-                    flatDirectoryArtifactRepository.dir(projectExtension.storeSelfLibsDir)
+                    flatDirectoryArtifactRepository.dir(projectExtension.moduleAarsDir)
+                    flatDirectoryArtifactRepository.dir(projectExtension.thirdPartyAarsDir)
                 }
             }
             // 获取有效的启动任务,若没有配置,则采主工程命名的task
