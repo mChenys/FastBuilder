@@ -121,7 +121,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
         // 获取所有的模块工程集合
         val moduleProjectList = pluginContext.getModuleProjectList()
 
-        // 从集合中查找到需要替换依赖的module工程, 如果currentProject==app工程, 这里查询结果是null
+        // 从集合中查找到需要替换依赖的module工程, 如果 currentProject == app 工程, 这里查询结果是null
         val moduleProject = moduleProjectList.firstOrNull { it.moduleExtension.name == currentProject.path }
 
         // 替换所有待处理的module工程依赖
@@ -143,8 +143,8 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             // release前缀类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "release")
             // 变体前缀
-            val flavorName = moduleProject!!.moduleExtension.flavorName
-            if (flavorName.isNotBlank()) {
+            val flavorName = moduleProject?.moduleExtension?.flavorName
+            if (flavorName != null && flavorName.isNotBlank() && flavorName.isNotEmpty()) {
                 //api debugApi tiyaDebugApi
                 DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName)
                 DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Debug")
