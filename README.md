@@ -1,6 +1,14 @@
 # FastBuilder
 一个可以提升`Android`编译效率的Gradle插件
 
+# 编译时间对比
+集成插件前:
+![snOLyFO3cj](https://user-images.githubusercontent.com/19259572/148940591-4c5c9ef7-88da-43c4-a4bd-d7264c47ff52.png)
+
+集成插件后,且存在aar:
+![KMpHUGiW6T](https://user-images.githubusercontent.com/19259572/148940640-4e27476b-a099-43db-89d4-d825ee8d3341.png)
+
+
 # 插件原理
 在gradle全局配置完成后设置监听，当执行项目的assemble任务后，会触发模块工程aar的生成和拷贝操作，并记录模块工程的最后修改时间，当下次执行assemble任务时会判断模块工程是否修改过（对比最后修改时间）来决定是否采用aar包进行依赖，如果模块工程没有改动，那么会修改工程的源码依赖，替换为aar包的依赖，并且将该工程下的所有依赖向上传递给对其有依赖的模块工程，这个过程是一个递归的操作，假设App工程依赖user模块，user模块依赖common模块，common模块依赖base模块，如果user和base变成了aar包方式继承，其中common工程有代码变动，那么需要将user模块gradle文件内配置的所有依赖向上传递给App工程，同时还需要将base模块的依赖向上传递给common模块。
 
@@ -13,7 +21,8 @@ App--》user--》common--》base
 base--》common--》user--》App
 
 # 类图
-![image](https://user-images.githubusercontent.com/19259572/148692194-41f36b17-c7e0-4569-ba8b-3e67957b2b9b.png)
+![FastBuilder类图](https://user-images.githubusercontent.com/19259572/148940455-241585ad-8fb9-4e2b-8217-37efd8198e6f.png)
+
 
 
 # 使用指南
