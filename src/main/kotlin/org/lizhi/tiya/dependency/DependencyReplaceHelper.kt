@@ -134,7 +134,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                 handleReplaceDependency(configuration, dependency, currentProject)
             }
         }
-        // 把下层的依赖投递到上层, 由于下层的module变成aar后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
+        // 把下层的依赖投递到上层, 由于下层的 module 变成 aar 后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
         if (parent == pluginContext.getApplyProject() ||(parent != null && moduleProject != null && moduleProject.cacheValid) ) {
             // 原始类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
