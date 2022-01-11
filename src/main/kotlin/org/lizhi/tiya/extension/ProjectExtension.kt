@@ -34,20 +34,21 @@ open class ProjectExtension(private val project: Project) {
     var logEnable: Boolean = false
 
     /***
-     * 如果当前的task任务名称满足就启动依赖替换
+     * 如果当前的task任务名称满足就启动依赖替换,例如task名字是:app:assembleDebug
+     * 如果不配置的话,默认检测到包含apply的Project名字就表示满足运行条件
      */
     var detectLauncherRegex: String = ""
 
 
     /**
-     * 得到存储lib的目录
+     * 可选,存储工程模块aar的目录
      */
-    var storeLibsDir: File = File(project.rootProject.buildDir, ".fast_builder_aar")
+    var moduleAarsDir: File = File(project.rootProject.buildDir, ".fast_builder_module_aar")
 
     /**
-     * 用于存储files('./src/zhiya/jniLibs/smantifraud.aar') 移动后的文件
+     * 可选,存储第三方aar的目录,解决files('xxx.aar') 依赖的传递问题
      */
-    var storeSelfLibsDir: File = File(project.rootProject.buildDir, ".fast_builder_flatDir")
+    var thirdPartyAarsDir: File = File(project.rootProject.buildDir, ".fast_builder_thirdParty_aar")
 
 
     /**

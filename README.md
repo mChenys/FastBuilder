@@ -25,33 +25,33 @@ plugins {
 }
 //插件配置
 moduleArchive {
-    //可选参数.是否打印log 默认为false
+    // 可选参数.是否打印log 默认为false
     logEnable = true
-    //可选参数.是否启用插件 默认为false
+    // 可选参数.是否启用插件 默认为false
     pluginEnable = true
-    //可选参数.存储插件临时配置目录,不设置默认会在根工程的build/.fast_builder_aar下
-    storeLibsDir = project.rootProject.file("libs")
-    //下面配置哪些模块可以被编译成aar缓存
+    // 可选参数.存储插件临时配置目录,不设置默认会在根工程的build/.fast_builder_module_aar下
+    moduleAarsDir = project.rootProject.file("libs")
+    // 可选参数.存储第三方aar的目录,不设置默认会在根工程的build/.fast_builder_thirdParty_aar下
+    thirdPartyAarsDir =  project.rootProject.file("libs")
+    // 可选参数.如果配置了那么只会由该任务触发执行,不配置的话,默认会检测是否包含apply的工程名字
+    detectLauncherRegex = ":app:assembleDebug"
+    // 下面配置哪些模块可以被编译成aar缓存
     subModuleConfig {
-        //image-picker是一个aar模块，那么他会自动在构建后缓存
-        //从而提高效率，在您修改这个模块后会自动进行构建
+        // image-picker是一个module工程，具体视你项目而定,配置后会在编译时替换为aar依赖,并且会在您修改这个模块后会自动进行构建
         register(":image-picker") {
-            //可选参数.是否使用debug版本
+            // 可选参数.是否使用debug版本
             useDebug = true
-            //可选参数.是否启用这个模块配置 
+            // 可选参数.是否启用这个模块配置 
             enable = true
-            //可选参数. 缓存的aar命中
+            // 可选参数. 缓存的aar命中,不选的话默认命名格式为: _${module name}.aar
             aarName = "image-picker-debug.aar"
-            //可选参数.构建变体 如没有可不写
+            // 可选参数.构建变体 如没有可不写
             flavorName = "tiya"
         }
-        //另一个aar模块，其最简约配置
+        // 另一个module模块，其最简约配置
         register(":floatwindow") {
       
         }
-
-
-
     }
 }
 ```

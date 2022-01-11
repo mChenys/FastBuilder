@@ -43,7 +43,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
 
     /**
-     * 用于替换 Api files('./src/zhiya/jniLibs/smantifraud.aar') 依赖为 api(name:"xxx",ext:"aar")
+     * 用于替换 api files('xxx.aar') 依赖为 api(name:"xxx",ext:"aar")
      * files依赖移到父亲后目录改变会触发重新编译打包导致merge错误
      *
      * todo 这个函数性能太低了 需要优化
@@ -81,13 +81,13 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                                 continue
                             }
                             //存在在执行拷贝操作
-                            val intoFile = File(pluginContext.getProjectExtension().storeSelfLibsDir, singleFile.name)
+                            val intoFile = File(pluginContext.getProjectExtension().thirdPartyAarsDir, singleFile.name)
                             if (!intoFile.exists()) {
                                 FastBuilderLogger.logLifecycle("执行文件拷贝 $singleFile to  $intoFile")
 
                                 childProject.value.copy { copySpec: CopySpec ->
                                     copySpec.from(singleFile)
-                                    copySpec.into(pluginContext.getProjectExtension().storeSelfLibsDir)
+                                    copySpec.into(pluginContext.getProjectExtension().thirdPartyAarsDir)
                                 }
                             }
                             DependencyUtils.suppressionDeChange(configuration)
@@ -105,11 +105,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                 }
 
             }
-
-
         }
-
-
     }
 
 
@@ -133,6 +129,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                 handleReplaceDependency(configuration, dependency, currentProject)
             }
         }
+
         // 把下层的依赖投递到上层, 由于下层的 module 变成 aar 后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
         if (parent == pluginContext.getApplyProject() || (parent != null && moduleProject != null && moduleProject.cacheValid)) {
             // 原始类型
@@ -185,7 +182,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
         // 如果当前模块工程在配置项中注册过且生效的才需要处理
         if (dependencyModuleProject != null && dependencyModuleProject.moduleExtension.enable) {
-            //标记这个对象被引用了
+            // 标记这个对象被引用了
             dependencyModuleProject.flagHasOut = true
 
             FastBuilderLogger.logLifecycle("Handle dependency：${currentProject.name}:${dependency.name}  ")
