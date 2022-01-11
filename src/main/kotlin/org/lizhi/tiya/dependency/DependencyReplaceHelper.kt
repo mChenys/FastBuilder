@@ -16,7 +16,6 @@ package org.lizhi.tiya.dependency
 import org.gradle.api.Project
 import org.gradle.api.artifacts.*
 import org.gradle.api.file.CopySpec
-import org.gradle.api.file.FileCollection
 import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
 import org.lizhi.tiya.log.FastBuilderLogger
 import org.lizhi.tiya.plugin.IPluginContext
@@ -135,7 +134,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             }
         }
         // 把下层的依赖投递到上层, 由于下层的 module 变成 aar 后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
-        if (parent == pluginContext.getApplyProject() ||(parent != null && moduleProject != null && moduleProject.cacheValid) ) {
+        if (parent == pluginContext.getApplyProject() || (parent != null && moduleProject != null && moduleProject.cacheValid)) {
             // 原始类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
             // Debug 前缀类型
