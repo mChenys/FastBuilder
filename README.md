@@ -1,5 +1,9 @@
+
 # FastBuilder
+[![versionImg](https://badgen.net/maven/v/metadata-url/https://plugins.gradle.org/m2/io/github/tiyateam/fastbuilder/FastBuilder/maven-metadata.xml?label=FastBuilder)](https://plugins.gradle.org/plugin/io.github.fanmingyi.modulearchive)
+
 一个可以提升`Android`编译效率的Gradle插件
+
 
 # 编译时间对比
 集成插件前:
