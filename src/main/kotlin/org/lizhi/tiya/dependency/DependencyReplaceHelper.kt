@@ -116,7 +116,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
         // 获取所有的模块工程集合
         val moduleProjectList = pluginContext.getModuleProjectList()
 
-        // 从集合中查找到需要替换依赖的module工程, 如果currentProject==app工程, 这里查询结果是null
+        // 从集合中查找到需要替换依赖的module工程, 如果 currentProject == app 工程, 这里查询结果是null
         val moduleProject = moduleProjectList.firstOrNull { it.moduleExtension.name == currentProject.path }
 
         // 替换所有待处理的module工程依赖
@@ -129,7 +129,8 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                 handleReplaceDependency(configuration, dependency, currentProject)
             }
         }
-        // 把下层的依赖投递到上层, 由于下层的module变成aar后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
+
+        // 把下层的依赖投递到上层, 由于下层的 module 变成 aar 后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
         if (parent == pluginContext.getApplyProject() || (parent != null && moduleProject != null && moduleProject.cacheValid)) {
             // 原始类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
@@ -138,8 +139,8 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             // release前缀类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "release")
             // 变体前缀
-            val flavorName = moduleProject!!.moduleExtension.flavorName
-            if (flavorName.isNotBlank()) {
+            val flavorName = moduleProject?.moduleExtension?.flavorName
+            if (flavorName != null && flavorName.isNotBlank() && flavorName.isNotEmpty()) {
                 //api debugApi tiyaDebugApi
                 DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName)
                 DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Debug")
