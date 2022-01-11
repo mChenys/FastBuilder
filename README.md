@@ -75,7 +75,7 @@ buildscript {
     }
   }
   dependencies {
-    classpath "io.github.tiyateam.fastbuilder:fastbuilder:${LastedVersion}"
+    classpath "io.github.tiyateam.fastbuilder:FastBuilder:${LastedVersion}"
   }
 }
 //在某个模块开启
