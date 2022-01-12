@@ -76,7 +76,7 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
             FastBuilderLogger.logLifecycle("${project.moduleExtension.name}  found cache aar.")
             return true
         }
-        FastBuilderLogger.logLifecycle("${project.moduleExtension.name} don't find cache aar.")
+        FastBuilderLogger.logLifecycle("${project.moduleExtension.name} aar cache invalid.")
         return false
     }
 

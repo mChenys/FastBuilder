@@ -36,7 +36,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
         val starTime = System.currentTimeMillis()
         replaceSelfResolvingDependency()
         val endTime = System.currentTimeMillis()
-        FastBuilderLogger.logLifecycle("替换files依赖事件 ${endTime - starTime}")
+        FastBuilderLogger.logLifecycle("替换files依赖耗时: ${endTime - starTime}")
 
         replaceDependency(pluginContext.getApplyProject())
     }
@@ -129,9 +129,15 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                 handleReplaceDependency(configuration, dependency, currentProject)
             }
         }
+        // 当父工程也是module工程是才有值
+        val parentModuleProject = moduleProjectList.firstOrNull { it.moduleExtension.name == parent?.path }
+        val parentCacheValid = parentModuleProject?.cacheValid ?: false
 
         // 把下层的依赖投递到上层, 由于下层的 module 变成 aar 后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
-        if (parent == pluginContext.getApplyProject() || (parent != null && moduleProject != null && moduleProject.cacheValid)) {
+        if (parent == pluginContext.getApplyProject() || (parent != null && moduleProject != null
+                    && (moduleProject.cacheValid
+                    // fix: 上层module是aar依赖,下层module是源码依赖的情况
+                    || (parentCacheValid && !moduleProject.cacheValid) ))) {
             // 原始类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
             // Debug 前缀类型
