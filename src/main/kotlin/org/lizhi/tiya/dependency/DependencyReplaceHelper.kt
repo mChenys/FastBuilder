@@ -54,15 +54,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                 /**
                  * 此处是为了跳过不必要的config，只有后缀是api runtimeOnly implementation才处理
                  */
-                var flag = false
-                for (hitName in configList) {
-                    if (configuration.name.endsWith(hitName, true)) {
-                        flag = true
-                        break
-                    }
-                }
-
-                if (!flag) {
+                if (!DependencyUtils.configIsMatchEnd(configuration)) {
                     continue@configFor
                 }
 
@@ -121,6 +113,9 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
         // 替换所有待处理的module工程依赖
         for (configuration in currentProject.configurations) {
+            if (!DependencyUtils.configIsMatchEnd(configuration)) {
+                continue
+            }
             // 遍历每一种依赖项集合,例如api、implementation等等
             val mutableSet = mutableSetOf<Dependency>()
             mutableSet.addAll(configuration.dependencies) // 这里转成可变集合来操作

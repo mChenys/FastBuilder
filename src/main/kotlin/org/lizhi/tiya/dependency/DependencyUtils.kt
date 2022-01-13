@@ -60,6 +60,8 @@ object DependencyUtils {
         }
     }
 
+    val configEndNameList = mutableSetOf("api", "runtimeOnly", "implementation")
+
     /**
      * 将currentProject的依赖copy到parentProject
      */
@@ -67,7 +69,7 @@ object DependencyUtils {
         currentProject: Project,
         parentProject: Project,
         prefix: String,
-        list: Set<String> = mutableSetOf("api", "runtimeOnly", "implementation")
+        list: Set<String> = configEndNameList
     ) {
         for (configName in list) {
             val newConfigName = if (prefix.isBlank()) {
@@ -136,6 +138,19 @@ object DependencyUtils {
             }
         }
         return false
+    }
+
+    /**
+     * 这个配置后缀是我们期望的
+     */
+    fun configIsMatchEnd(configuration: Configuration, list: Set<String> = configEndNameList): Boolean {
+
+        val matchRet = list.firstOrNull {
+            configuration.name.endsWith(it, true)
+        }
+
+
+        return matchRet != null
     }
 
 }
