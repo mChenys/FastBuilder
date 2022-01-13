@@ -8,7 +8,7 @@ plugins {
 
 val artifactId="FastBuilder"
 val groupName = "io.github.tiyateam.fastbuilder"
-val artifactVersion = "1.0.54"
+val artifactVersion = "1.0.58"
 group = groupName
 version = artifactVersion
 
@@ -42,6 +42,7 @@ dependencies {
 
     implementation("com.android.tools.build:gradle:3.6.0")
     implementation("org.jooq:joor-java-8:0.9.13")
+    implementation("org.jetbrains.kotlin:kotlin-gradle-plugin:1.3.60")
 }
 
 tasks.getByName<Test>("test") {

@@ -13,7 +13,12 @@
 
 package org.lizhi.tiya.config
 
+import org.gradle.api.Project
+import org.gradle.internal.impldep.aQute.bnd.annotation.component.Modified
+import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
+import org.jetbrains.kotlin.gradle.internal.KaptWithKotlincTask
 import org.lizhi.tiya.log.FastBuilderLogger
+import org.lizhi.tiya.plugin.AppHelper
 import org.lizhi.tiya.plugin.IPluginContext
 import org.lizhi.tiya.project.ModuleProject
 import java.io.File
@@ -107,7 +112,12 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
         val moduleProjectList = pluginContext.getProjectExtension().moduleExtension.toList().map {
             it.convertModuleProject(pluginContext)
         }
-        val countDownLatch = CountDownLatch(moduleProjectList.size)
+        //启用了kapt优化
+        val countDownLatch = if (pluginContext.getProjectExtension().kaptOptimization) {
+            CountDownLatch(moduleProjectList.size + 1)
+        } else {
+            CountDownLatch(moduleProjectList.size)
+        }
         // 开启多线程处理
         for (moduleProject in moduleProjectList) {
             thread {
@@ -115,7 +125,59 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
                 countDownLatch.countDown()
             }
         }
+        if (pluginContext.getProjectExtension().kaptOptimization) {
+            thread {
+                //禁用kapt
+                if (pluginContext.getPropertyConfig().appIsCacheValid()) {
+
+                    val applyProject = pluginContext.getApplyProject()
+                    val kaptGenerateStubsTask = applyProject.tasks.withType(KaptGenerateStubsTask::class.java)
+                    val KaptWithKotlincTask = applyProject.tasks.withType(KaptWithKotlincTask::class.java)
+                    for (kaptGenerateStubsTask in kaptGenerateStubsTask) {
+                        kaptGenerateStubsTask.onlyIf {
+                            false
+                        }
+                    }
+                    for (kaptWithKotlincTask in KaptWithKotlincTask) {
+                        kaptWithKotlincTask.onlyIf {
+                            false
+                        }
+                    }
+                    FastBuilderLogger.logLifecycle("FMY 缓存有效 ${kaptGenerateStubsTask.size} ${KaptWithKotlincTask.size}")
+                } else {
+                    FastBuilderLogger.logLifecycle("FMY 缓存无效")
+                }
+                countDownLatch.countDown()
+            }
+        }
+
         countDownLatch.await()
+
         return moduleProjectList
+    }
+
+    fun saveAppLastModified() {
+        val propertyInfo = getPropertyInfo()
+        propertyInfo[pluginContext.getApplyProject().name.replace(":", "")] = "$appLastModified"
+    }
+
+    fun obtainAppLastModifiedFromConfig(): Long {
+        val propertyInfo = getPropertyInfo()
+        val name = pluginContext.getApplyProject().name.replace(":", "")
+        return propertyInfo.getProperty(name, "0").toLong()
+    }
+
+    var appLastModified = 0L
+
+    /**
+     * app的缓存是否有效
+     */
+    fun appIsCacheValid(): Boolean {
+        if (appLastModified == 0L) {
+            appLastModified = AppHelper.obtainLastModified(pluginContext.getApplyProject())
+        }
+
+        return obtainAppLastModifiedFromConfig() == appLastModified
+
     }
 }

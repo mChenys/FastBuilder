@@ -31,7 +31,6 @@ import javax.inject.Inject
 abstract class AARBuilderTask @Inject constructor(@Internal val pluginContext: IPluginContext) : DefaultTask() {
 
     @InputFiles
-    @SkipWhenEmpty
     abstract fun getInputAARList(): ConfigurableFileCollection
 
     @OutputDirectory
@@ -42,6 +41,7 @@ abstract class AARBuilderTask @Inject constructor(@Internal val pluginContext: I
 
     @TaskAction
     fun perform() {
+        pluginContext.getPropertyConfig().saveAppLastModified()
         // 设置拷贝任务
         project.copy {
             it.from(getInputAARList())

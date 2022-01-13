@@ -16,6 +16,7 @@ package org.lizhi.tiya.project
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
 import org.lizhi.tiya.extension.ModuleExtension
+import org.lizhi.tiya.plugin.AppHelper
 import org.lizhi.tiya.plugin.IPluginContext
 import java.io.File
 
@@ -85,12 +86,7 @@ class ModuleProject(val moduleExtension: ModuleExtension, private val pluginCont
     fun obtainLastModified(): Long {
         if (lastModified <= 0) {
             val moduleProject = obtainProject()
-            val file = moduleProject.fileTree(".").matching { patterns ->
-                patterns.exclude("build", ".gradle", ".cxx")
-            }.toList().maxBy {
-                it.lastModified()
-            }
-            lastModified = file?.lastModified() ?: 0
+            lastModified = AppHelper.obtainLastModified(moduleProject)
         }
         return lastModified
     }
