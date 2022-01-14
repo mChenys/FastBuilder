@@ -44,6 +44,8 @@ moduleArchive {
     logEnable = true
     // 可选参数.是否启用插件 默认为false
     pluginEnable = true
+    // 可选参数.优化应用插件kapt智能跳过 默认为false
+    kaptOptimization=false
     // 可选参数.存储插件临时配置目录,不设置默认会在根工程的build/.fast_builder_module_aar下
     moduleAarsDir = project.rootProject.file("libs")
     // 可选参数.存储第三方aar的目录,不设置默认会在根工程的build/.fast_builder_thirdParty_aar下
