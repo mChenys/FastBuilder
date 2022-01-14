@@ -127,10 +127,12 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
         val parentCacheValid = parentModuleProject?.cacheValid ?: false
 
         // 把下层的依赖投递到上层, 由于下层的 module 变成 aar 后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
-        if (parent == pluginContext.getApplyProject() || (parent != null && moduleProject != null)
+        if (parent != null
+//            parent == pluginContext.getApplyProject() || (parent != null && moduleProject != null)
                     /* && (moduleProject.cacheValid
                      // fix: 上层module是aar依赖,下层module是源码依赖的情况
                      || (parentCacheValid && !moduleProject.cacheValid) ))*/) {
+            FastBuilderLogger.logLifecycle("缓存拷贝 ${currentProject.name} >>>> ${parent.name}")
             // 原始类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
             // Debug 前缀类型
