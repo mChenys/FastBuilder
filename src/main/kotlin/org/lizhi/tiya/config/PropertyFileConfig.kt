@@ -42,6 +42,9 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
     private fun getPropertyInfo(): Properties {
         if (!isInit) {
             val moduleAarsDir = pluginContext.getProjectExtension().moduleAarsDir
+            if (!moduleAarsDir.exists()) {
+                moduleAarsDir.mkdirs()
+            }
             val configFile = File(moduleAarsDir, fileName)
             if (!configFile.exists()) {
                 configFile.createNewFile()
@@ -143,9 +146,9 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
                             false
                         }
                     }
-                    FastBuilderLogger.logLifecycle("FMY 缓存有效 ${kaptGenerateStubsTask.size} ${KaptWithKotlincTask.size}")
+                    FastBuilderLogger.logLifecycle("App 模块Kapt 缓存有效 ${kaptGenerateStubsTask.size} ${KaptWithKotlincTask.size}")
                 } else {
-                    FastBuilderLogger.logLifecycle("FMY 缓存无效")
+                    FastBuilderLogger.logLifecycle("App 模块Kapt 缓存无效")
                 }
                 countDownLatch.countDown()
             }
