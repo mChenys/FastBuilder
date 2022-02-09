@@ -13,10 +13,9 @@
 
 package org.lizhi.tiya.config
 
-import org.gradle.api.Project
-import org.gradle.internal.impldep.aQute.bnd.annotation.component.Modified
 import org.jetbrains.kotlin.gradle.internal.KaptGenerateStubsTask
 import org.jetbrains.kotlin.gradle.internal.KaptWithKotlincTask
+import org.jetbrains.kotlin.gradle.tasks.AbstractKotlinCompile
 import org.lizhi.tiya.log.FastBuilderLogger
 import org.lizhi.tiya.plugin.AppHelper
 import org.lizhi.tiya.plugin.IPluginContext
@@ -130,23 +129,19 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
         }
         if (pluginContext.getProjectExtension().kaptOptimization) {
             thread {
-                //禁用kapt
-                if (pluginContext.getPropertyConfig().appIsCacheValid()) {
-
+                // 禁用app的kapt任务
+                if (isAppCacheValid()) {
                     val applyProject = pluginContext.getApplyProject()
-                    val kaptGenerateStubsTask = applyProject.tasks.withType(KaptGenerateStubsTask::class.java)
-                    val KaptWithKotlincTask = applyProject.tasks.withType(KaptWithKotlincTask::class.java)
-                    for (kaptGenerateStubsTask in kaptGenerateStubsTask) {
-                        kaptGenerateStubsTask.onlyIf {
-                            false
-                        }
+                    applyProject.tasks.withType(KaptGenerateStubsTask::class.java).all { task ->
+                        task.onlyIf { false }
                     }
-                    for (kaptWithKotlincTask in KaptWithKotlincTask) {
-                        kaptWithKotlincTask.onlyIf {
-                            false
-                        }
+                    applyProject.tasks.withType(KaptWithKotlincTask::class.java).all { task ->
+                        task.onlyIf { false }
                     }
-                    FastBuilderLogger.logLifecycle("App 模块Kapt 缓存有效 ${kaptGenerateStubsTask.size} ${KaptWithKotlincTask.size}")
+                    applyProject.tasks.withType(AbstractKotlinCompile::class.java).all { task ->
+                        task.onlyIf { false }
+                    }
+                    FastBuilderLogger.logLifecycle("App 模块Kapt 缓存有效")
                 } else {
                     FastBuilderLogger.logLifecycle("App 模块Kapt 缓存无效")
                 }
@@ -175,7 +170,7 @@ class PropertyFileConfig(private val pluginContext: IPluginContext) {
     /**
      * app的缓存是否有效
      */
-    fun appIsCacheValid(): Boolean {
+    fun isAppCacheValid(): Boolean {
         if (appLastModified == 0L) {
             appLastModified = AppHelper.obtainLastModified(pluginContext.getApplyProject())
         }
