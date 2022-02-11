@@ -60,7 +60,7 @@ object DependencyUtils {
         }
     }
 
-    val configEndNameList = mutableSetOf("api", "runtimeOnly", "implementation")
+    val configEndNameList = mutableSetOf("api", "runtimeOnly", "implementation","compileOnly")
 
     /**
      * 将currentProject的依赖copy到parentProject
