@@ -33,10 +33,10 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
      * 从根工程开始向下替换依赖
      */
     fun replaceDependency() {
-        val starTime = System.currentTimeMillis()
-        replaceSelfResolvingDependency()
-        val endTime = System.currentTimeMillis()
-        FastBuilderLogger.logLifecycle("替换files依赖耗时: ${endTime - starTime}")
+//        val starTime = System.currentTimeMillis()
+//        replaceSelfResolvingDependency()
+//        val endTime = System.currentTimeMillis()
+//        FastBuilderLogger.logLifecycle("替换files依赖耗时: ${endTime - starTime}")
 
         replaceDependency(pluginContext.getApplyProject())
     }
