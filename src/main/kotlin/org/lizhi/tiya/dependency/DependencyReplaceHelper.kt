@@ -33,10 +33,10 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
      * 从根工程开始向下替换依赖
      */
     fun replaceDependency() {
-        val starTime = System.currentTimeMillis()
-        replaceSelfResolvingDependency()
-        val endTime = System.currentTimeMillis()
-        FastBuilderLogger.logLifecycle("替换files依赖耗时: ${endTime - starTime}")
+//        val starTime = System.currentTimeMillis()
+//        replaceSelfResolvingDependency()
+//        val endTime = System.currentTimeMillis()
+//        FastBuilderLogger.logLifecycle("替换files依赖耗时: ${endTime - starTime}")
 
         replaceDependency(pluginContext.getApplyProject())
     }
@@ -111,9 +111,9 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
         // 替换所有待处理的module工程依赖
         for (configuration in currentProject.configurations) {
-            if (!DependencyUtils.configIsMatchEnd(configuration)) {
-                continue
-            }
+//            if (!DependencyUtils.configIsMatchEnd(configuration)) {
+//                continue
+//            }
             // 遍历每一种依赖项集合,例如api、implementation等等
             val mutableSet = mutableSetOf<Dependency>()
             mutableSet.addAll(configuration.dependencies) // 这里转成可变集合来操作
@@ -123,8 +123,8 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             }
         }
         // 当父工程也是module工程是才有值
-        val parentModuleProject = moduleProjectList.firstOrNull { it.moduleExtension.name == parent?.path }
-        val parentCacheValid = parentModuleProject?.cacheValid ?: false
+//        val parentModuleProject = moduleProjectList.firstOrNull { it.moduleExtension.name == parent?.path }
+//        val parentCacheValid = parentModuleProject?.cacheValid ?: false
 
         // 把下层的依赖投递到上层, 由于下层的 module 变成 aar 后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
         if (parent != null
@@ -134,18 +134,23 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
                      || (parentCacheValid && !moduleProject.cacheValid) ))*/) {
             FastBuilderLogger.logLifecycle("缓存拷贝 ${currentProject.name} >>>> ${parent.name}")
             // 原始类型
-            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
-            // Debug 前缀类型
-            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "debug")
-            // release前缀类型
-            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "release")
-            // 变体前缀
-            val flavorName = moduleProject?.moduleExtension?.flavorName
-            if (flavorName != null && flavorName.isNotBlank() && flavorName.isNotEmpty()) {
-                //api debugApi tiyaDebugApi
-                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName)
-                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Debug")
-                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Release")
+//            currentProject.
+//            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
+//            // Debug 前缀类型
+//            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "debug")
+//            // release前缀类型
+//            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "release")
+//            // 变体前缀
+//            val flavorName = moduleProject?.moduleExtension?.flavorName
+//            if (flavorName != null && flavorName.isNotBlank() && flavorName.isNotEmpty()) {
+//                //api debugApi tiyaDebugApi
+//                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName)
+//                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Debug")
+//                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Release")
+//            }
+            //todo 要修改 不是所有的config都要上传
+            for (configuration in currentProject.configurations) {
+                DependencyUtils.copyDependency(configuration,parent.configurations.getByName("api"))
             }
         }
     }
