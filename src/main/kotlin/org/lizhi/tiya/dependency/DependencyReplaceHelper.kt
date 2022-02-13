@@ -14,95 +14,54 @@
 package org.lizhi.tiya.dependency
 
 import org.gradle.api.Project
-import org.gradle.api.artifacts.*
-import org.gradle.api.file.CopySpec
-import org.gradle.api.internal.artifacts.dependencies.DefaultSelfResolvingDependency
+import org.gradle.api.artifacts.Configuration
+import org.gradle.api.artifacts.Dependency
+import org.gradle.api.artifacts.DependencySubstitutions
+import org.gradle.api.artifacts.ProjectDependency
 import org.lizhi.tiya.log.FastBuilderLogger
 import org.lizhi.tiya.plugin.IPluginContext
 import org.lizhi.tiya.task.AARBuilderTask
-import java.io.File
 
 /**
  * 依赖替换帮助类
  */
 class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
-    private val configList = mutableSetOf<String>("api", "runtimeOnly", "implementation")
+    /**
+     * 处理过工程的
+     */
+    var handleProjectSet = mutableSetOf<Project>()
 
     /**
      * 从根工程开始向下替换依赖
      */
     fun replaceDependency() {
-//        val starTime = System.currentTimeMillis()
-//        replaceSelfResolvingDependency()
-//        val endTime = System.currentTimeMillis()
-//        FastBuilderLogger.logLifecycle("替换files依赖耗时: ${endTime - starTime}")
-
-        replaceDependency(pluginContext.getApplyProject())
+//        pluginContext.getApplyProject().rootProject.allprojects { project ->
+            replaceDependency(pluginContext.getApplyProject())
+//        }
+//        pluginContext.getApplyProject().rootProject.allprojects { project ->
+//            for (configuration in project.configurations) {
+//                for (dependency in configuration.dependencies) {
+//                    if (dependency is ProjectDependency) {
+//                        FastBuilderLogger.logLifecycle("BUG!!! >>>> ${project.name}:${configuration.name}:${dependency.name}")
+//
+//                    }
+//                }
+//            }
+//        }
     }
-
-
-    /**
-     * 用于替换 api files('xxx.aar') 依赖为 api(name:"xxx",ext:"aar")
-     * files依赖移到父亲后目录改变会触发重新编译打包导致merge错误
-     */
-    private fun replaceSelfResolvingDependency() {
-        for (childProject in pluginContext.getApplyProject().rootProject.childProjects) {
-            configFor@ for (configuration in childProject.value.configurations) {
-                /**
-                 * 此处是为了跳过不必要的config，只有后缀是api runtimeOnly implementation才处理
-                 */
-                if (!DependencyUtils.configIsMatchEnd(configuration)) {
-                    continue@configFor
-                }
-
-                val mutableSet = mutableSetOf<Dependency>()
-                mutableSet.addAll(configuration.dependencies) // 这里转成可变集合来操作
-                for (dependency in mutableSet) {
-                    if (dependency is SelfResolvingDependency && dependency is FileCollectionDependency) {
-                        val defaultSelfResolvingDependency = dependency as DefaultSelfResolvingDependency
-                        val fileCollection = defaultSelfResolvingDependency.files
-                        if (fileCollection.files.size != 1) {
-                            continue
-                        } else {
-
-                            val singleFile = fileCollection.singleFile
-                            if (!singleFile.name.endsWith("aar", true)) {
-                                continue
-                            }
-                            //存在在执行拷贝操作
-                            val intoFile = File(pluginContext.getProjectExtension().thirdPartyAarsDir, singleFile.name)
-                            if (!intoFile.exists()) {
-                                FastBuilderLogger.logLifecycle("执行文件拷贝 $singleFile to  $intoFile")
-
-                                childProject.value.copy { copySpec: CopySpec ->
-                                    copySpec.from(singleFile)
-                                    copySpec.into(pluginContext.getProjectExtension().thirdPartyAarsDir)
-                                }
-                            }
-                            DependencyUtils.suppressionDeChange(configuration)
-
-                            configuration.dependencies.remove(dependency)
-                            configuration.dependencies.add(
-                                DependencyUtils.obtainDependency(
-                                    pluginContext,
-                                    singleFile.name.removeSuffix(".aar"),
-                                    "aar"
-                                )
-                            )
-                        }
-                    }
-                }
-
-            }
-        }
-    }
-
 
     /**
      * 递归替换依赖
      */
-    private fun replaceDependency(currentProject: Project, parent: Project? = null) {
+     fun replaceDependency(currentProject: Project, parent: Project? = null) {
+
+//        if (handleProjectSet.contains(currentProject)) {
+//            return
+//        } else {
+//            handleProjectSet.add(currentProject)
+//        }
+
         // 获取所有的模块工程集合
         val moduleProjectList = pluginContext.getModuleProjectList()
 
@@ -111,6 +70,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
 
         // 替换所有待处理的module工程依赖
         for (configuration in currentProject.configurations) {
+
             if (!DependencyUtils.configIsMatchEnd(configuration)) {
                 continue
             }
@@ -129,23 +89,23 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
         // 把下层的依赖投递到上层, 由于下层的 module 变成 aar 后会丢失它所引入的依赖,因此需要将这些依赖回传给上层
         if (parent != null
 //            parent == pluginContext.getApplyProject() || (parent != null && moduleProject != null)
-                    /* && (moduleProject.cacheValid
-                     // fix: 上层module是aar依赖,下层module是源码依赖的情况
-                     || (parentCacheValid && !moduleProject.cacheValid) ))*/) {
+        /* && (moduleProject.cacheValid
+         // fix: 上层module是aar依赖,下层module是源码依赖的情况
+         || (parentCacheValid && !moduleProject.cacheValid) ))*/) {
             FastBuilderLogger.logLifecycle("缓存拷贝 ${currentProject.name} >>>> ${parent.name}")
             // 原始类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "")
             // Debug 前缀类型
             DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "debug")
             // release前缀类型
-            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "release")
+//            DependencyUtils.copyDependencyWithPrefix(currentProject, parent, "release")
             // 变体前缀
             val flavorName = moduleProject?.moduleExtension?.flavorName
             if (flavorName != null && flavorName.isNotBlank() && flavorName.isNotEmpty()) {
                 //api debugApi tiyaDebugApi
                 DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName)
                 DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Debug")
-                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Release")
+//                DependencyUtils.copyDependencyWithPrefix(currentProject, parent, flavorName + "Release")
             }
         }
     }
@@ -198,7 +158,7 @@ class DependencyReplaceHelper(private val pluginContext: IPluginContext) {
             } else {
                 FastBuilderLogger.logLifecycle("${currentProject.name} 依赖 ${dependencyModuleProject.obtainName()} 没有命中缓存")
                 // aar缓存无效,重新声明要构建的aar
-                AARBuilderTask.prepare(pluginContext, dependencyModuleProject)
+//                AARBuilderTask.prepare(pluginContext, dependencyModuleProject)
             }
         }
 

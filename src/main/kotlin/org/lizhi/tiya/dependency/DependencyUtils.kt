@@ -17,11 +17,13 @@ import org.gradle.api.Project
 import org.gradle.api.artifacts.Configuration
 import org.gradle.api.artifacts.Dependency
 import org.gradle.api.artifacts.ModuleDependency
+import org.gradle.api.artifacts.ProjectDependency
 import org.gradle.api.internal.DefaultDomainObjectSet
 import org.gradle.internal.ImmutableActionSet
 import org.joor.Reflect
 import org.lizhi.tiya.log.FastBuilderLogger
 import org.lizhi.tiya.plugin.IPluginContext
+import org.lizhi.tiya.project.ModuleProject
 
 /**
  * 依赖处理工具类
@@ -60,7 +62,8 @@ object DependencyUtils {
         }
     }
 
-    val configEndNameList = mutableSetOf("api", "runtimeOnly", "implementation","compileOnly")
+
+    val configEndNameList = mutableSetOf("api", "runtimeOnly", "implementation", "compileOnly")
 
     /**
      * 将currentProject的依赖copy到parentProject
@@ -84,13 +87,10 @@ object DependencyUtils {
 
 
     fun copyDependency(currentProject: Project, parentProject: Project, configName: String) {
-        val srcConfig = currentProject.configurations.getByName(configName)
-        val dstConfig = parentProject.configurations.getByName(configName)
-        val parentContains = parentProject.configurations.names.contains(configName)
-        if (parentContains) {
-            // 必须要保证依赖配置的名字在父工程存在,比如子工程用了一个叫xxxApi的configName,父工程也需要存在
-            copyDependency(srcConfig, dstConfig)
-        }
+        val srcConfig = currentProject.configurations.maybeCreate(configName)
+        val dstConfig = parentProject.configurations.maybeCreate(configName)
+        // 必须要保证依赖配置的名字在父工程存在,比如子工程用了一个叫xxxApi的configName,父工程也需要存在
+        copyDependency(srcConfig, dstConfig)
     }
 
     fun copyDependency(src: Configuration, dst: Configuration) {

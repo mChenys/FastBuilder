@@ -69,10 +69,11 @@ abstract class AARBuilderTask @Inject constructor(@Internal val pluginContext: I
     ) {
         getInputAARList().from(taskProvider)
         // 兼容高本版
-        dependsOn(packageLibraryProvider.get())
         val zip = taskProvider.get()
         val archiveFileName = zip.archiveFileName.get()
         moduleProjectCacheMap[archiveFileName] = moduleProject
+        dependsOn(zip)
+
     }
 
     /**

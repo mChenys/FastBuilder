@@ -14,6 +14,7 @@
 package org.lizhi.tiya.plugin
 
 import org.gradle.api.Project
+import org.gradle.api.Task
 import org.lizhi.tiya.config.PropertyFileConfig
 import org.lizhi.tiya.dependency.DependencyReplaceHelper
 import org.lizhi.tiya.extension.ProjectExtension
@@ -59,4 +60,6 @@ interface IPluginContext {
      * 获取模块的工程集合
      */
     fun getModuleProjectList():List<ModuleProject>
+
+    fun getApkTaskList():List<Task>
 }

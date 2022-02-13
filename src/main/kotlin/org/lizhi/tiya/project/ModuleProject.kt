@@ -15,6 +15,7 @@ package org.lizhi.tiya.project
 
 import org.gradle.api.Project
 import org.gradle.api.artifacts.Dependency
+import org.gradle.api.tasks.bundling.Zip
 import org.lizhi.tiya.extension.ModuleExtension
 import org.lizhi.tiya.plugin.AppHelper
 import org.lizhi.tiya.plugin.IPluginContext
@@ -112,6 +113,7 @@ class ModuleProject(val moduleExtension: ModuleExtension, private val pluginCont
                 )
             )
         }
+        dependency
         return dependency as Dependency
     }
 
@@ -119,6 +121,7 @@ class ModuleProject(val moduleExtension: ModuleExtension, private val pluginCont
      * 当前依赖被引用
      */
     var flagHasOut: Boolean = false
+
 
 
 }

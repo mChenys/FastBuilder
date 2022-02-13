@@ -16,8 +16,11 @@ package org.lizhi.tiya.plugin
 import com.android.build.gradle.internal.dsl.BaseAppModuleExtension
 import org.gradle.api.Plugin
 import org.gradle.api.Project
+import org.gradle.api.Task
+import org.gradle.api.artifacts.*
 import org.lizhi.tiya.config.PropertyFileConfig
 import org.lizhi.tiya.dependency.DependencyReplaceHelper
+import org.lizhi.tiya.dependency.DependencyUtils
 import org.lizhi.tiya.extension.ProjectExtension
 import org.lizhi.tiya.log.FastBuilderLogger
 import org.lizhi.tiya.project.ModuleProject
@@ -46,9 +49,32 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
     // module工程集合
     private var moduleProjectList: List<ModuleProject> = emptyList()
 
+    private var taskProjectList: MutableList<Task> = mutableListOf()
+
 
     override fun apply(project: Project) {
         this.project = project
+
+        project.gradle.taskGraph.whenReady {
+
+            for (allTask in it.allTasks) {
+                println("无环图构造完成${allTask.project} ${allTask.name}")
+
+            }
+            for (allproject in project.rootProject.allprojects) {
+            allproject.configurations.all { con->
+                con.dependencies.all {d->
+                    if (d is ProjectDependency) {
+                        if (d.name.contains("base")) {
+                            println("${allproject.name} ${con.name} ${d.name} ${d is ProjectDependency}")
+                        }
+                    }
+
+                }
+            }
+        }
+
+        }
 
         // 注册Project的配置项
         this.projectExtension = project.extensions.create<ProjectExtension>(
@@ -56,6 +82,8 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
             ProjectExtension::class.java,
             project
         )
+
+
         // 初始化配置文件
         this.propertyFileConfig = PropertyFileConfig(this)
         // 注册构建的task
@@ -68,28 +96,27 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
         }
         // 初始化依赖替换帮助类
         this.dependencyReplaceHelper = DependencyReplaceHelper(this)
+        val androidExtension = project.extensions.getByName("android") as BaseAppModuleExtension
 
-        // 全局配置完成后执行
-        project.gradle.projectsEvaluated {
-            if (!projectExtension.pluginEnable) {
-                return@projectsEvaluated
-            }
-            val androidExtension = project.extensions.getByName("android") as BaseAppModuleExtension
-            androidExtension.applicationVariants.all { variant ->
-                if (!propertyFileConfig.existConfigFile()) {
-                    variant.assembleProvider.get().dependsOn(project.tasks.getByName("clean").apply {
-                        doLast {
-                            FastBuilderLogger.logLifecycle("清理任务执行完毕by:${variant.assembleProvider.get().name}")
-                        }
-                    })
-                }
-                // 在assemble任务之后执行aar的构建任务
-                variant.assembleProvider.get().finalizedBy(this.aarBuilderTask)
-            }
+        project.rootProject.findProject(":image-picker")?.afterEvaluate {
+            println()
+        }
 
+
+        project.afterEvaluate {
             val starTime = System.currentTimeMillis();
+
+
             //赋值日志是否启用
             FastBuilderLogger.enableLogging = projectExtension.logEnable
+
+            // 初始化module工程
+            moduleProjectList = propertyFileConfig.prepareByConfig()
+
+
+            if (!projectExtension.pluginEnable) {
+                return@afterEvaluate
+            }
 
             // 设置module工程的flat仓库,为后续添加aar做准备
             // https://issuetracker.google.com/issues/165821826
@@ -99,28 +126,93 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
                     flatDirectoryArtifactRepository.dir(projectExtension.thirdPartyAarsDir)
                 }
             }
-            // 获取有效的启动任务,若没有配置,则采主工程命名的task
-            val launcherTaskName = project.gradle.startParameter.taskNames.firstOrNull { taskName ->
-                if (projectExtension.detectLauncherRegex.isNullOrBlank()) {
-                    taskName.contains(project.name)
-                } else {
-                    taskName.contains(projectExtension.detectLauncherRegex)
+
+            androidExtension.applicationVariants.all { variant ->
+                variant.assembleProvider.get().finalizedBy(aarBuilderTask)
+            }
+            for (moduleProject in moduleProjectList) {
+                //緩存有效
+                if (!moduleProject.cacheValid) {
+                    AARBuilderTask.prepare(this, moduleProject)
                 }
             }
-            // 避免无效的任务执行
-            if (launcherTaskName.isNullOrBlank()) {
-                FastBuilderLogger.logLifecycle("检测任务不相关不启用替换逻辑")
-                return@projectsEvaluated
-            }
-            // 初始化module工程
-            moduleProjectList = propertyFileConfig.prepareByConfig()
 
-            // 开始替换依赖
-            dependencyReplaceHelper.replaceDependency()
+
+
+
+            val cacheList = moduleProjectList.filter { it.cacheValid }
+//            for (moduleProject in cacheList) {
+//                val maybeCreate = project.configurations.maybeCreate("forFastPlugin")
+//                maybeCreate.dependencies.add(project.dependencies.create(moduleProject.obtainProject()))
+//                moduleProject.obtainProject().configurations.all {con->
+//                    con.withDependencies {
+//                        println()
+//                    }
+//                }
+//            }
+            val nameList = cacheList.map { it.obtainName().replace(":", "") }
+            for (currentProject in project.rootProject.allprojects) {
+                currentProject.repositories.flatDir { flatDirectoryArtifactRepository ->
+                    flatDirectoryArtifactRepository.dir(projectExtension.moduleAarsDir)
+                    flatDirectoryArtifactRepository.dir(projectExtension.thirdPartyAarsDir)
+                }
+
+
+                currentProject.configurations.all { con ->
+                    DependencyUtils.suppressionDeChange(con)
+                    if (DependencyUtils.configIsMatchEnd(con)) {
+                        con.withDependencies { set ->
+                            val deCopy = mutableListOf<Dependency>()
+                            deCopy.addAll(set)
+                            for (dependency in deCopy) {
+                                println("截取依赖 ${currentProject.name}:${con.name}:${dependency.name}")
+
+                                if (dependency !is ProjectDependency) {
+                                    continue
+                                }
+
+                                val dependencyProject = dependency.dependencyProject
+                                // 根据依赖工程的名字获取对应的包装类ModuleProject
+                                val dependencyModuleProject =
+                                    moduleProjectList.firstOrNull { it.moduleExtension.name == dependencyProject.path }
+
+                                // 如果当前模块工程在配置项中注册过且生效的才需要处理
+                                if (dependencyModuleProject != null && dependencyModuleProject.moduleExtension.enable) {
+                                    dependencyReplaceHelper.replaceDependency(currentProject,dependencyModuleProject.obtainProject())
+                                }
+
+
+                            }
+
+
+                        }
+                    }
+
+
+                }
+
+            }
+
+
 
             val endTime = System.currentTimeMillis();
             FastBuilderLogger.logLifecycle("插件花費的配置時間${endTime - starTime}")
+
         }
+
+        project.gradle.projectsEvaluated {
+            for (allproject in project.rootProject.allprojects) {
+                allproject.configurations.all { con->
+                    con.dependencies.all {d->
+                        if (d.name.contains("base")) {
+                            println("${allproject.name} ${con.name} ${d.name} ${d is ProjectDependency}")
+                        }
+                    }
+                }
+            }
+        }
+
+
     }
 
     override fun getContext(): IPluginContext = this
@@ -136,4 +228,7 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
     override fun getPropertyConfig(): PropertyFileConfig = propertyFileConfig
 
     override fun getModuleProjectList(): List<ModuleProject> = moduleProjectList
+    override fun getApkTaskList(): List<Task> {
+        return taskProjectList
+    }
 }
