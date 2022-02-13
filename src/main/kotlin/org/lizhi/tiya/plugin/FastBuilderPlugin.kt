@@ -57,22 +57,19 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
 
         project.gradle.taskGraph.whenReady {
 
-            for (allTask in it.allTasks) {
-                println("无环图构造完成${allTask.project} ${allTask.name}")
 
-            }
-            for (allproject in project.rootProject.allprojects) {
-            allproject.configurations.all { con->
-                con.dependencies.all {d->
-                    if (d is ProjectDependency) {
-                        if (d.name.contains("base")) {
-                            println("${allproject.name} ${con.name} ${d.name} ${d is ProjectDependency}")
-                        }
-                    }
+//            for (allproject in project.rootProject.allprojects) {
+//            allproject.configurations.all { con->
+//                con.dependencies.all {d->
+//                    if (d is ProjectDependency) {
+//                        if (d.name.contains("base")) {
+//                            println("${allproject.name} ${con.name} ${d.name} ${d is ProjectDependency}")
+//                        }
+//                    }
+//
+//                }
+//            }
 
-                }
-            }
-        }
 
         }
 
@@ -98,9 +95,6 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
         this.dependencyReplaceHelper = DependencyReplaceHelper(this)
         val androidExtension = project.extensions.getByName("android") as BaseAppModuleExtension
 
-        project.rootProject.findProject(":image-picker")?.afterEvaluate {
-            println()
-        }
 
 
         project.afterEvaluate {
@@ -139,18 +133,6 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
 
 
 
-
-            val cacheList = moduleProjectList.filter { it.cacheValid }
-//            for (moduleProject in cacheList) {
-//                val maybeCreate = project.configurations.maybeCreate("forFastPlugin")
-//                maybeCreate.dependencies.add(project.dependencies.create(moduleProject.obtainProject()))
-//                moduleProject.obtainProject().configurations.all {con->
-//                    con.withDependencies {
-//                        println()
-//                    }
-//                }
-//            }
-            val nameList = cacheList.map { it.obtainName().replace(":", "") }
             for (currentProject in project.rootProject.allprojects) {
                 currentProject.repositories.flatDir { flatDirectoryArtifactRepository ->
                     flatDirectoryArtifactRepository.dir(projectExtension.moduleAarsDir)
@@ -178,7 +160,13 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
 
                                 // 如果当前模块工程在配置项中注册过且生效的才需要处理
                                 if (dependencyModuleProject != null && dependencyModuleProject.moduleExtension.enable) {
-                                    dependencyReplaceHelper.replaceDependency(currentProject,dependencyModuleProject.obtainProject())
+                                    if (dependencyModuleProject.cacheValid) {
+                                        dependencyReplaceHelper.replaceDependency(
+                                            currentProject,
+                                            dependencyModuleProject.obtainProject()
+                                        )
+                                    }
+
                                 }
 
 
@@ -194,22 +182,9 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
             }
 
 
-
             val endTime = System.currentTimeMillis();
             FastBuilderLogger.logLifecycle("插件花費的配置時間${endTime - starTime}")
 
-        }
-
-        project.gradle.projectsEvaluated {
-            for (allproject in project.rootProject.allprojects) {
-                allproject.configurations.all { con->
-                    con.dependencies.all {d->
-                        if (d.name.contains("base")) {
-                            println("${allproject.name} ${con.name} ${d.name} ${d is ProjectDependency}")
-                        }
-                    }
-                }
-            }
         }
 
 
