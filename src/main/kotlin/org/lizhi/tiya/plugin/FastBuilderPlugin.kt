@@ -18,6 +18,7 @@ import org.gradle.api.Plugin
 import org.gradle.api.Project
 import org.gradle.api.Task
 import org.gradle.api.artifacts.*
+import org.gradle.api.invocation.Gradle
 import org.lizhi.tiya.config.PropertyFileConfig
 import org.lizhi.tiya.dependency.DependencyReplaceHelper
 import org.lizhi.tiya.dependency.DependencyUtils
@@ -25,6 +26,7 @@ import org.lizhi.tiya.extension.ProjectExtension
 import org.lizhi.tiya.log.FastBuilderLogger
 import org.lizhi.tiya.project.ModuleProject
 import org.lizhi.tiya.task.AARBuilderTask
+import java.io.File
 
 /**
  * 插件入口
@@ -54,10 +56,7 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
 
     override fun apply(project: Project) {
         this.project = project
-
         project.gradle.taskGraph.whenReady {
-
-
 //            for (allproject in project.rootProject.allprojects) {
 //            allproject.configurations.all { con->
 //                con.dependencies.all {d->
@@ -69,17 +68,13 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
 //
 //                }
 //            }
-
-
         }
-
         // 注册Project的配置项
         this.projectExtension = project.extensions.create<ProjectExtension>(
             "moduleArchive",
             ProjectExtension::class.java,
             project
         )
-
 
         // 初始化配置文件
         this.propertyFileConfig = PropertyFileConfig(this)
@@ -95,32 +90,26 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
         this.dependencyReplaceHelper = DependencyReplaceHelper(this)
         val androidExtension = project.extensions.getByName("android") as BaseAppModuleExtension
 
-
+        project.rootProject.gradle.projectsEvaluated {
+            project.tasks.named("preBuild").configure {
+                it.doFirst {
+                    File("${project.projectDir.path}/build/intermediates/data_binding_base_class_logs_dependency_artifacts/").deleteRecursively()
+                    File("${project.projectDir.path}/build/intermediates/external_file_lib_dex_archives/").deleteRecursively()
+                }
+            }
+        }
 
         project.afterEvaluate {
-            val starTime = System.currentTimeMillis();
-
-
+            val starTime = System.currentTimeMillis()
             //赋值日志是否启用
             FastBuilderLogger.enableLogging = projectExtension.logEnable
 
             // 初始化module工程
             moduleProjectList = propertyFileConfig.prepareByConfig()
 
-
             if (!projectExtension.pluginEnable) {
                 return@afterEvaluate
             }
-
-            // 设置module工程的flat仓库,为后续添加aar做准备
-            // https://issuetracker.google.com/issues/165821826
-            for (childProject in project.rootProject.childProjects) {
-                childProject.value.repositories.flatDir { flatDirectoryArtifactRepository ->
-                    flatDirectoryArtifactRepository.dir(projectExtension.moduleAarsDir)
-                    flatDirectoryArtifactRepository.dir(projectExtension.thirdPartyAarsDir)
-                }
-            }
-
             androidExtension.applicationVariants.all { variant ->
                 variant.assembleProvider.get().finalizedBy(aarBuilderTask)
             }
@@ -130,16 +119,12 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
                     AARBuilderTask.prepare(this, moduleProject)
                 }
             }
-
-
-
             for (currentProject in project.rootProject.allprojects) {
+                // 设置module工程的flat仓库,为后续添加aar做准备
                 currentProject.repositories.flatDir { flatDirectoryArtifactRepository ->
                     flatDirectoryArtifactRepository.dir(projectExtension.moduleAarsDir)
                     flatDirectoryArtifactRepository.dir(projectExtension.thirdPartyAarsDir)
                 }
-
-
                 currentProject.configurations.all { con ->
                     DependencyUtils.suppressionDeChange(con)
                     if (DependencyUtils.configIsMatchEnd(con)) {
@@ -148,11 +133,9 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
                             deCopy.addAll(set)
                             for (dependency in deCopy) {
                                 println("截取依赖 ${currentProject.name}:${con.name}:${dependency.name}")
-
                                 if (dependency !is ProjectDependency) {
                                     continue
                                 }
-
                                 val dependencyProject = dependency.dependencyProject
                                 // 根据依赖工程的名字获取对应的包装类ModuleProject
                                 val dependencyModuleProject =
@@ -168,26 +151,14 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
                                     }
 
                                 }
-
-
                             }
-
-
                         }
                     }
-
-
                 }
-
             }
-
-
             val endTime = System.currentTimeMillis();
             FastBuilderLogger.logLifecycle("插件花費的配置時間${endTime - starTime}")
-
         }
-
-
     }
 
     override fun getContext(): IPluginContext = this
@@ -203,7 +174,7 @@ class FastBuilderPlugin : Plugin<Project>, IPluginContext {
     override fun getPropertyConfig(): PropertyFileConfig = propertyFileConfig
 
     override fun getModuleProjectList(): List<ModuleProject> = moduleProjectList
-    override fun getApkTaskList(): List<Task> {
-        return taskProjectList
-    }
+
+    override fun getApkTaskList(): List<Task> = taskProjectList
+
 }
