@@ -88,11 +88,6 @@ buildscript {
 apply plugin: "io.github.tiyateam.fastbuilder"
 ```
 
-# 谁在使用
-
-| [TIYA](https://play.google.com/store/apps/details?id=com.huanliao.tiya&hl=en_US&gl=US)        | 
-| --------   | 
-|[<img src="https://play-lh.googleusercontent.com/RwuBOgoBX1OmmR5W14AyBDp9pNgnh1eJD2UmJzhVSZOpZYG1xI_y1aihbE4aP3dURwc=s360-rw" alt="TIYA" width="150"/> ](https://play.google.com/store/apps/details?id=com.huanliao.tiya&hl=en_US&gl=US)       |
 
 
 # License
